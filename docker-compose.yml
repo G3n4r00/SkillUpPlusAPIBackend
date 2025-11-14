@@ -1,17 +1,48 @@
 version: '3.8'
 
+# 1. DEFINIÇÃO DA REDE EXTERNA
+networks:
+  # 'skillup_net' é o nome que usaremos.
+  # docker network create --subnet=10.11.200.0/24 skillup_net
+  skillup_net:
+    external: true
+
 services:
+  # Serviço do Banco de Dados
   db:
     image: postgres:16
     container_name: skillup_db
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: pass1234 
+      POSTGRES_PASSWORD: pass1234
       POSTGRES_DB: SkillUpPlusDb
     ports:
-      - "5433:5432"
+      - "5432:5432"
+    
+    # 2. MAPEAMENTO DE VOLUME
+    # Mapeia o diretório do HOST para o diretório de DADOS do Postgres
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # Host Path (na VM) : Container Path (Dados do Postgres)
+      - /var/lib/docker/gs:/var/lib/postgresql/data
+    
+    # Conecta o container à rede externa
+    networks:
+      - skillup_net
 
-volumes:
-  postgres_data:
+  # Serviço da API
+  api:
+    build: . # Constrói usando o Dockerfile da pasta atual
+    container_name: skillup_api
+    ports:
+      # Mapeia a porta 8080 do Host (VM) para a 8080 do Container
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      # A API agora encontra o 'db' usando o nome do serviço
+      # dentro da rede 'skillup_net'
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=SkillUpPlusDb;Username=postgres;Password=pass1234
+    
+    # Conecta o container à rede externa
+    networks:
+      - skillup_net

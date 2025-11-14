@@ -1,60 +1,73 @@
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using SkillUpPlus.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using SkillUpPlus.Services;
+using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// --- CONFIGURAÇÃO DE SERVIÇOS ---
 
 builder.Services.AddControllers();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Configuração de JWT (Seu código estava perfeito)
 var jwtOptions = builder.Configuration.GetSection("JwtOptions");
 var firebaseProjectId = jwtOptions["Audience"];
 var firebaseIssuer = jwtOptions["Issuer"];
 
 builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme) // Define Bearer como padrão
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        // Define Firebase como a autoridade. 
-        // O ASP.NET vai baixar automaticamente as chaves públicas do Google para validar a assinatura.
         options.Authority = firebaseIssuer;
-
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
             ValidIssuer = firebaseIssuer,
-
             ValidateAudience = true,
             ValidAudience = firebaseProjectId,
-
-            ValidateLifetime = true // Garante que o token não expirou
+            ValidateLifetime = true
         };
     });
 
+// Injeção de Dependência
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITrackService, TrackService>();
 builder.Services.AddScoped<IProgressService, ProgressService>();
 builder.Services.AddScoped<IOnboardingService, OnboardingService>();
 
-builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+
+// --- CONSTRUÇÃO DO APP E PIPELINE DE MIDDLEWARE ---
+
 var app = builder.Build();
 
-// Popular o Db
+// Tratamento Global de Erros
+app.UseExceptionHandler(appError =>
+{
+    appError.Run(async context =>
+    {
+        context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(new { message = "Ocorreu um erro interno no servidor." });
+    });
+});
+
+
+// População do Db
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var context = services.GetRequiredService<AppDbContext>();
-
         DbInitializer.Initialize(context);
     }
     catch (Exception ex)
@@ -64,19 +77,27 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// Configure the HTTP request pipeline.
+// Configuração do Pipeline HTTP
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// Ordem correta da Pipeline de Produção:
+// 1. Encaminhar headers do Proxy (para sabermos se é HTTPS)
+app.UseForwardedHeaders();
 
+// 2. Aplicar política de CORS
+app.UseCors("AllowAll");
+
+// 3. Autenticar (Saber quem é)
 app.UseAuthentication();
 
+// 4. Autorizar (Saber o que pode fazer)
 app.UseAuthorization();
 
+// 5. Mapear para o Controller
 app.MapControllers();
 
 app.Run();
