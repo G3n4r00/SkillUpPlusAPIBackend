@@ -8,7 +8,7 @@ namespace SkillUpPlus.Controllers
     [ApiController]
     [Route("api/[controller]")]
     //ATENÇÃO TIRAR ISSO DEPOIS O COMENTADO
-    // [Authorize]
+    [Authorize]
     public class TracksController : ControllerBase
     {
         private readonly ITrackService _trackService;

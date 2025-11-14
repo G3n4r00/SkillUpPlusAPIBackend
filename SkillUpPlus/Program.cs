@@ -39,6 +39,7 @@ builder.Services
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITrackService, TrackService>();
 builder.Services.AddScoped<IProgressService, ProgressService>();
+builder.Services.AddScoped<IOnboardingService, OnboardingService>();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

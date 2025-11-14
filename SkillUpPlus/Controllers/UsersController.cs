@@ -9,7 +9,7 @@ namespace SkillUpPlus.Controllers
 {
     [ApiController]
     [Route("api/[controller]")] // Rota: api/users
-    //[Authorize]
+    [Authorize]
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;

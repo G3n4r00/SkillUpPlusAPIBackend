@@ -98,5 +98,127 @@ namespace SkillUpPlus.Services
 
             return null; // Já tinha o badge, não é novidade
         }
+
+        public async Task<DashboardDto> GetUserDashboardAsync(string userId)
+        {
+            //Carregar User COM Interesses(Include essencial!)
+            var user = await _context.Users
+            .Include(u => u.Badges).ThenInclude(ub => ub.Badge)
+            .Include(u => u.Interests).ThenInclude(ui => ui.InterestTag) // <--- NOVO INCLUDE
+            .FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user == null) throw new Exception("Usuário não encontrado.");
+
+            // 2. Recuperar todo o histórico de progresso desse usuário
+            // Trazemos também os dados dos Módulos e Trilhas para evitar múltiplas queries
+            var userProgress = await _context.UserProgresses
+                .Include(up => up.Module)
+                .ThenInclude(m => m.Track)
+                .Where(up => up.UserId == userId)
+                .ToListAsync();
+
+            // 3. Recuperar TODAS as trilhas e seus módulos para saber o total de cada uma
+            // (Necessário para calcular a %)
+            var allTracks = await _context.Tracks
+                .Include(t => t.Modules)
+                .ToListAsync();
+
+            // 4. Montar o DTO
+            var dashboard = new DashboardDto
+            {
+                UserId = user.Id,
+                UserName = user.Name,
+                Badges = user.Badges.Select(b => new BadgeDto
+                {
+                    Id = b.BadgeId,
+                    Name = b.Badge.Name,
+                    IconUrl = b.Badge.IconUrl
+                }).ToList()
+            };
+
+            // 5. Processar cada trilha do sistema para ver o status do usuário nela
+            foreach (var track in allTracks)
+            {
+                var trackModulesIds = track.Modules.Select(m => m.Id).ToHashSet();
+                var completedModulesCount = userProgress.Count(up => trackModulesIds.Contains(up.ModuleId));
+                var totalModules = track.Modules.Count;
+
+                if (completedModulesCount == 0) continue; // Não começou, não mostra no dashboard
+
+                var trackDto = new TrackProgressDto
+                {
+                    TrackId = track.Id,
+                    Title = track.Title,
+                    Category = track.Category,
+                    TotalModules = totalModules,
+                    CompletedModules = completedModulesCount
+                };
+
+                if (completedModulesCount >= totalModules)
+                {
+                    // Trilha Concluída
+                    trackDto.NextModuleId = null; // Não tem próximo
+                    dashboard.CompletedTracks.Add(trackDto);
+                }
+                else
+                {
+                    // Trilha Em Andamento 
+                    // Descobre qual é o primeiro módulo que AINDA NÃO foi feito
+                    var completedIds = userProgress
+                        .Where(up => trackModulesIds.Contains(up.ModuleId))
+                        .Select(up => up.ModuleId)
+                        .ToHashSet();
+
+                    var nextModule = track.Modules
+                        .OrderBy(m => m.Id) // Assume ordem por ID; idealmente teria um campo 'Order'
+                        .FirstOrDefault(m => !completedIds.Contains(m.Id));
+
+                    trackDto.NextModuleId = nextModule?.Id;
+                    dashboard.InProgressTracks.Add(trackDto);
+                }
+
+
+            }
+
+            var userInterestNames = user.Interests
+            .Select(i => i.InterestTag.Name.ToLower())
+            .ToList();
+
+            // Filtra trilhas que:
+            // 1. O usuário AINDA NÃO completou (ou não começou)
+            // 2. A categoria da trilha bate com algum interesse
+            var alreadyCompletedTrackIds = dashboard.CompletedTracks.Select(t => t.TrackId).ToHashSet();
+            var inProgressTrackIds = dashboard.InProgressTracks.Select(t => t.TrackId).ToHashSet();
+
+            foreach (var track in allTracks)
+            {
+                // Ignora se já completou ou está fazendo (para não recomendar o óbvio)
+                if (alreadyCompletedTrackIds.Contains(track.Id) || inProgressTrackIds.Contains(track.Id))
+                    continue;
+
+                // Verifica match de categoria
+                // Ex: Categoria "Inteligência Artificial" dá match com tag "Inteligência Artificial"
+                bool matchesInterest = userInterestNames.Any(tag =>
+                    track.Category.ToLower().Contains(tag) ||
+                    tag.Contains(track.Category.ToLower()));
+
+                if (matchesInterest || userInterestNames.Count == 0)
+                {
+                    // Cria o DTO (Reutilizando TrackProgressDto com 0% de progresso)
+                    dashboard.RecommendedTracks.Add(new TrackProgressDto
+                    {
+                        TrackId = track.Id,
+                        Title = track.Title,
+                        Category = track.Category,
+                        TotalModules = track.Modules.Count,
+                        CompletedModules = 0,
+                        NextModuleId = track.Modules.FirstOrDefault()?.Id // Começa do inicio
+                    });
+                }
+            }
+
+            return dashboard;
+        }
+
     }
 }
