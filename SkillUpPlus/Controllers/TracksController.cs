@@ -19,7 +19,6 @@ namespace SkillUpPlus.Controllers
         }
 
         // GET: api/tracks?category=IA
-        // Atende ao RF-005 (Catálogo com Filtros)
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TrackSummaryDto>>> GetTracks([FromQuery] string? category)
         {
@@ -28,7 +27,6 @@ namespace SkillUpPlus.Controllers
         }
 
         // GET: api/tracks/5
-        // Atende ao RF-006 (Detalhes) e prepara o RF-008 (Conteúdo)
         [HttpGet("{id}")]
         public async Task<ActionResult<TrackDetailDto>> GetTrack(int id)
         {
