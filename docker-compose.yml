@@ -1,11 +1,9 @@
-version: '3.8'
-
 networks:
   skillup_net:
     external: true
 
 services:
-  # 1. Serviço do Banco de Dados
+  # Serviço do Banco de Dados
   db:
     image: postgres:16
     container_name: skillup_db
@@ -25,9 +23,9 @@ services:
       timeout: 5s
       retries: 5
 
-  # 2. Serviço da API
+  # Serviço da API
   api:
-    image: g3n0z/skillup-api:2.0
+    image: g3n0z/skillup-api:2.0 # (Assumindo que esta é sua imagem v2)
     container_name: skillup_api
     ports:
       - "8080:8080"
