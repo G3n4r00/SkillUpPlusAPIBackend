@@ -9,8 +9,12 @@ using Asp.Versioning;
 namespace SkillUpPlus.Controllers
 {
     /// <summary>
-    /// Gerencia o registro e login de usuários (Autenticação v2).
+    /// Gerencia o registro e login de usuários.
     /// </summary>
+    /// <remarks>
+    /// Este é o "cartão de visitas" da API. Não requer autenticação,
+    /// pois é o endpoint usado para OBTER o token de autenticação.
+    /// </remarks>
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/auth")]
@@ -29,12 +33,16 @@ namespace SkillUpPlus.Controllers
         /// <summary>
         /// Registra um novo usuário na plataforma.
         /// </summary>
+        /// <remarks>
+        /// Cria a entidade do usuário no banco de dados, aplica hash na senha
+        /// e, se for bem-sucedido, retorna um JWT válido para o novo usuário.
+        /// </remarks>
         /// <param name="dto">Dados de registro (e-mail, nome, senha).</param>
         /// <response code="200">Retorna os dados do usuário e um JWT válido.</response>
-        /// <response code="400">Dados inválidos (ex: e-mail já em uso ou senha fraca).</response>
+        /// <response code="400">Dados inválidos. A resposta pode ser uma string (ex: "Este e-mail já está em uso.") ou um array de erros do Identity (ex: "Senhas devem ter pelo menos 6 caracteres.").</response>
         [HttpPost("register")]
         [ProducesResponseType(typeof(UserTokenDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)] // 'object' cobre strings E arrays de erro
         public async Task<ActionResult<UserTokenDto>> Register(RegisterDto dto)
         {
             if (await _userManager.Users.AnyAsync(x => x.Email == dto.Email))
@@ -54,10 +62,10 @@ namespace SkillUpPlus.Controllers
 
             if (!result.Succeeded)
             {
-                // Retorna os erros do Identity (ex: senha muito curta)
                 return BadRequest(result.Errors);
             }
 
+            // Se o registro foi OK, já loga o usuário e retorna o token
             return new UserTokenDto
             {
                 UserId = user.Id,
@@ -70,25 +78,29 @@ namespace SkillUpPlus.Controllers
         /// <summary>
         /// Autentica um usuário existente e retorna um JWT.
         /// </summary>
+        /// <remarks>
+        /// Verifica as credenciais (e-mail e senha) contra o banco de dados.
+        /// Se forem válidas, gera um novo token JWT para o usuário.
+        /// </remarks>
         /// <param name="dto">Dados de login (e-mail, senha).</param>
         /// <response code="200">Retorna os dados do usuário e um JWT válido.</response>
         /// <response code="401">E-mail ou senha inválidos.</response>
         [HttpPost("login")]
         [ProducesResponseType(typeof(UserTokenDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(string), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult<UserTokenDto>> Login(LoginDto dto)
         {
             var user = await _userManager.FindByEmailAsync(dto.Email);
             if (user == null)
             {
-                return Unauthorized("E-mail ou senha inválidos.");
+                return Unauthorized(new { message = "E-mail ou senha inválidos." });
             }
 
             var result = await _userManager.CheckPasswordAsync(user, dto.Password);
 
             if (!result)
             {
-                return Unauthorized("E-mail ou senha inválidos.");
+                return Unauthorized(new { message = "E-mail ou senha inválidos." });
             }
 
             return new UserTokenDto
@@ -101,3 +113,4 @@ namespace SkillUpPlus.Controllers
         }
     }
 }
+

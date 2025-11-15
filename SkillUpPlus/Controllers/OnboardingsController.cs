@@ -9,7 +9,6 @@ namespace SkillUpPlus.Controllers
 {
     /// <summary>
     /// Gerencia o processo de Onboarding do usuário, incluindo a seleção de interesses.
-    /// (Requer autenticação)
     /// </summary>
     [ApiController]
     [ApiVersion("1.0")]
@@ -47,7 +46,6 @@ namespace SkillUpPlus.Controllers
         /// </summary>
         /// <remarks>
         /// Este endpoint apaga as preferências antigas e salva a nova lista.
-        /// (Atende ao requisito RF-004)
         /// </remarks>
         /// <param name="dto">Um objeto JSON contendo a lista de IDs das tags selecionadas.</param>
         /// <response code="200">Preferências salvas com sucesso.</response>
@@ -62,8 +60,6 @@ namespace SkillUpPlus.Controllers
             // Busca o ID do usuário a partir do Token JWT
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            // Esta verificação é uma segurança extra, 
-            // pois o [Authorize] a nível de classe já deve barrar a requisição
             if (string.IsNullOrEmpty(userId))
             {
                 return Unauthorized();
