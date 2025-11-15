@@ -8,7 +8,7 @@ namespace SkillUpPlus.Models
         public int Id { get; set; }
 
         [Required]
-        public string Name { get; set; } = string.Empty; // Ex: "IA", "Liderança"
+        public string Name { get; set; } = string.Empty;
 
         [JsonIgnore]
         public ICollection<UserInterest> UserInterests { get; set; } = new List<UserInterest>();

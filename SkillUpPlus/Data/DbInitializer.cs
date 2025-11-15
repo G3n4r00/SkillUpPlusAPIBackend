@@ -9,13 +9,12 @@ namespace SkillUpPlus.Data
             // Garante que o banco existe
             context.Database.EnsureCreated();
 
-            // Se já existirem Tags, assumimos que o banco já foi populado
             if (context.InterestTags.Any())
             {
                 return;
             }
 
-            // 1. Tags de Interesse (IA, Soft Skills, etc.)
+            // Tags de Interesse (IA, Soft Skills, etc.)
             var tags = new InterestTag[]
             {
                 new InterestTag { Name = "Inteligência Artificial" },
@@ -27,7 +26,7 @@ namespace SkillUpPlus.Data
             context.InterestTags.AddRange(tags);
             context.SaveChanges(); 
 
-            // 2. Badges
+            // Badges
             var badges = new Badge[]
             {
                 new Badge { Name = "Pioneiro", IconUrl = "badge_pioneer.png" },
@@ -37,7 +36,7 @@ namespace SkillUpPlus.Data
             context.Badges.AddRange(badges);
             context.SaveChanges();
 
-            // 3. Trilhas e Módulos
+            // Trilhas e Módulos
             var tracks = new Track[]
             {
                 // Trilha 1: Soft Skills

@@ -14,7 +14,6 @@ namespace SkillUpPlus.Models
         public string Category { get; set; } = string.Empty; // Ex: IA, Soft Skills
         public int EstimatedTimeMinutes { get; set; }
 
-        // Relacionamento: Uma trilha tem muitos módulos
         public ICollection<Module> Modules { get; set; } = new List<Module>();
     }
 

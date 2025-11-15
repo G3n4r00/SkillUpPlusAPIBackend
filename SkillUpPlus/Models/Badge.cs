@@ -8,7 +8,7 @@ namespace SkillUpPlus.Models
         public int Id { get; set; }
 
         [Required]
-        public string Name { get; set; } = string.Empty; // Ex: "Mestre da Comunicação"
+        public string Name { get; set; } = string.Empty; 
 
         public string IconUrl { get; set; } = string.Empty;
 

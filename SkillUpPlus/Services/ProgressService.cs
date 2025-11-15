@@ -18,14 +18,14 @@ namespace SkillUpPlus.Services
         {
             var response = new ProgressResponseDto();
 
-            // 1. Validar se o módulo existe e pegar dados da Trilha (Track)
+            // Validar se o módulo existe e pegar dados da Trilha (Track)
             var module = await _context.Modules
                 .Include(m => m.Track) // de qual trilha é
                 .FirstOrDefaultAsync(m => m.Id == moduleId);
 
             if (module == null) throw new Exception("Módulo não encontrado.");
 
-            // 2. Registrar o progresso (Idempotente: se já existe, ignora)
+            // Registrar o progresso (Idempotente)
             var existingProgress = await _context.UserProgresses
                 .FirstOrDefaultAsync(up => up.UserId == userId && up.ModuleId == moduleId);
 
@@ -41,7 +41,7 @@ namespace SkillUpPlus.Services
             }
 
 
-            // 3. Verificar se a trilha foi completada
+            // Verificar se a trilha foi completada
             // Conta quantos módulos tem a trilha
             var totalModules = await _context.Modules.CountAsync(m => m.TrackId == module.TrackId);
 
@@ -109,21 +109,20 @@ namespace SkillUpPlus.Services
 
             if (user == null) throw new Exception("Usuário não encontrado.");
 
-            // 2. Recuperar todo o histórico de progresso desse usuário
-            // Trazemos também os dados dos Módulos e Trilhas para evitar múltiplas queries
+            // Recuperar todo o histórico de progresso desse usuário
+            // Também os dados dos Módulos e Trilhas para evitar múltiplas queries
             var userProgress = await _context.UserProgresses
                 .Include(up => up.Module)
                 .ThenInclude(m => m.Track)
                 .Where(up => up.UserId == userId)
                 .ToListAsync();
 
-            // 3. Recuperar TODAS as trilhas e seus módulos para saber o total de cada uma
-            // (Necessário para calcular a %)
+            // Recuperar TODAS as trilhas e seus módulos para saber o total de cada uma
             var allTracks = await _context.Tracks
                 .Include(t => t.Modules)
                 .ToListAsync();
 
-            // 4. Montar o DTO
+            // Montar o DTO
             var dashboard = new DashboardDto
             {
                 UserId = user.Id,
@@ -136,7 +135,7 @@ namespace SkillUpPlus.Services
                 }).ToList()
             };
 
-            // 5. Processar cada trilha do sistema para ver o status do usuário nela
+            // Processar cada trilha do sistema para ver o status do usuário nela
             foreach (var track in allTracks)
             {
                 var trackModulesIds = track.Modules.Select(m => m.Id).ToHashSet();
@@ -192,7 +191,7 @@ namespace SkillUpPlus.Services
 
             foreach (var track in allTracks)
             {
-                // Ignora se já completou ou está fazendo (para não recomendar o óbvio)
+                // Ignora se já completou ou está fazendo
                 if (alreadyCompletedTrackIds.Contains(track.Id) || inProgressTrackIds.Contains(track.Id))
                     continue;
 

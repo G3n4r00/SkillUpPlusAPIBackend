@@ -1,10 +1,11 @@
-# DEFINIÇÃO DA REDE EXTERNA
+version: '3.8'
+
 networks:
   skillup_net:
     external: true
 
 services:
-  # Serviço do Banco de Dados
+  # 1. Serviço do Banco de Dados
   db:
     image: postgres:16
     container_name: skillup_db
@@ -17,23 +18,29 @@ services:
     networks:
       - skillup_net
     restart: always
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d SkillUpPlusDb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
-  # Serviço da API
+  # 2. Serviço da API
   api:
     image: g3n0z/skillup-api:2.0
-    
     container_name: skillup_api
     ports:
       - "8080:8080"
-    depends_on:
-      - db
     
+    depends_on:
+      db:
+        condition: service_healthy
+        
     volumes:
       - /var/lib/docker/gs:/var/www/html
       
     environment:
       - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=SkillUpPlusDb;Username=postgres;Password=pass1234
-      
       - Jwt__Key=jk6wjH9rAoZFWqqEAgMxR3YjFNn1HsDHYREivR282rjFGbz8LkIVkAyNOpFnowtPDLjdsadsaygusadgbj7765dsagbjn6
       - Jwt__Issuer=https://api.skillupplus.com
       - Jwt__Audience=https://app.skillupplus.com

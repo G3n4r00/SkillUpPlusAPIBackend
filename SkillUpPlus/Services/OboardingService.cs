@@ -23,14 +23,14 @@ namespace SkillUpPlus.Services
 
         public async Task SaveUserInterestsAsync(string userId, List<int> tagIds)
         {
-            // 1. Limpar interesses antigos (estratégia de substituição completa)
+            // Limpar interesses antigos (substituição completa)
             var existingInterests = await _context.UserInterests
                 .Where(ui => ui.UserId == userId)
                 .ToListAsync();
 
             _context.UserInterests.RemoveRange(existingInterests);
 
-            // 2. Adicionar os novos
+            // Adicionar os novos
             // Verifica quais IDs passados realmente existem no banco para evitar erro de FK
             var validTags = await _context.InterestTags
                 .Where(t => tagIds.Contains(t.Id))

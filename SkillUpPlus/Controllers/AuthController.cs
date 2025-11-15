@@ -7,45 +7,55 @@ using SkillUpPlus.Services;
 
 namespace SkillUpPlus.Controllers
 {
+    /// <summary>
+    /// Gerencia o registro e login de usuários (Autenticação v2).
+    /// </summary>
     [ApiController]
     [Route("api/auth")]
+    [Produces("application/json")]
     public class AuthController : ControllerBase
     {
         private readonly UserManager<User> _userManager;
         private readonly ITokenService _tokenService;
+
         public AuthController(UserManager<User> userManager, ITokenService tokenService)
         {
             _userManager = userManager;
             _tokenService = tokenService;
         }
 
+        /// <summary>
+        /// Registra um novo usuário na plataforma.
+        /// </summary>
+        /// <param name="dto">Dados de registro (e-mail, nome, senha).</param>
+        /// <response code="200">Retorna os dados do usuário e um JWT válido.</response>
+        /// <response code="400">Dados inválidos (ex: e-mail já em uso ou senha fraca).</response>
         [HttpPost("register")]
+        [ProducesResponseType(typeof(UserTokenDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<UserTokenDto>> Register(RegisterDto dto)
         {
-            // Verifica se o e-mail já está em uso
             if (await _userManager.Users.AnyAsync(x => x.Email == dto.Email))
             {
                 return BadRequest("Este e-mail já está em uso.");
             }
 
-            // Cria o objeto do usuário
             var user = new User
             {
                 Email = dto.Email,
-                UserName = dto.Email, // Identity usa UserName para login
+                UserName = dto.Email,
                 Name = dto.Name,
                 CreatedAt = DateTime.UtcNow
             };
 
-            // Tenta criar o usuário no banco (o Identity cuida do HASH da senha)
             var result = await _userManager.CreateAsync(user, dto.Password);
 
             if (!result.Succeeded)
             {
+                // Retorna os erros do Identity (ex: senha muito curta)
                 return BadRequest(result.Errors);
             }
 
-            // Se deu certo, responde com os dados do usuário + um Token
             return new UserTokenDto
             {
                 UserId = user.Id,
@@ -55,17 +65,23 @@ namespace SkillUpPlus.Controllers
             };
         }
 
+        /// <summary>
+        /// Autentica um usuário existente e retorna um JWT.
+        /// </summary>
+        /// <param name="dto">Dados de login (e-mail, senha).</param>
+        /// <response code="200">Retorna os dados do usuário e um JWT válido.</response>
+        /// <response code="401">E-mail ou senha inválidos.</response>
         [HttpPost("login")]
+        [ProducesResponseType(typeof(UserTokenDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(string), StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult<UserTokenDto>> Login(LoginDto dto)
         {
-            // Encontra o usuário pelo e-mail
             var user = await _userManager.FindByEmailAsync(dto.Email);
             if (user == null)
             {
                 return Unauthorized("E-mail ou senha inválidos.");
             }
 
-            // Verifica se a senha está correta (o Identity compara os hashes)
             var result = await _userManager.CheckPasswordAsync(user, dto.Password);
 
             if (!result)
@@ -73,7 +89,6 @@ namespace SkillUpPlus.Controllers
                 return Unauthorized("E-mail ou senha inválidos.");
             }
 
-            // Sucesso! Retorna os dados do usuário + um Token
             return new UserTokenDto
             {
                 UserId = user.Id,
