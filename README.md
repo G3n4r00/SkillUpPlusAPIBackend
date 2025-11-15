@@ -76,23 +76,23 @@ v1.0 (Base)
 
 A v1 representa a funcionalidade central do MVP:
 
-    * Registro e Login (/api/v1/auth).
+* Registro e Login (/api/v1/auth).
 
-    * Catálogo e Módulos de Trilhas (/api/v1/tracks).
+* Catálogo e Módulos de Trilhas (/api/v1/tracks).
 
-    * Sistema de Progresso e Badges (/api/v1/profile).
+* Sistema de Progresso e Badges (/api/v1/profile).
 
-    * Onboarding de Interesses (/api/v1/onboarding).
+* Onboarding de Interesses (/api/v1/onboarding).
 
 v2.0 (Gamificação Avançada)
 
 A v2 introduz a "Gamificação Avançada" (Req. 11), adicionando Pontos de Experiência (XP) e Leaderboards:
 
-    * [v2] POST /api/v2/profile/progress: Agora retorna o xpGained (XP ganho) ao completar um módulo.
+* [v2] POST /api/v2/profile/progress: Agora retorna o xpGained (XP ganho) ao completar um módulo.
 
-    * [v2] GET /api/v2/profile/me: Agora retorna o totalXp (XP total) do usuário.
+* [v2] GET /api/v2/profile/me: Agora retorna o totalXp (XP total) do usuário.
 
-    * [v2] GET /api/v2/leaderboard: Um novo endpoint que retorna o Top 10 de usuários da plataforma, ordenados por XP.
+* [v2] GET /api/v2/leaderboard: Um novo endpoint que retorna o Top 10 de usuários da plataforma, ordenados por XP.
 
 ---
 
