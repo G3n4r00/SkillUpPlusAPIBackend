@@ -28,31 +28,31 @@ A arquitetura de produção consiste em 3 containers principais que se comunicam
 
 1. skillup_proxy (Nginx):
 
-  * É o único container exposto para a internet (Entrypoint).
+    * É o único container exposto para a internet (Entrypoint).
 
-  * Ouve nas portas 80 (para renovação de certificado) e 8443 (HTTPS).
+    * Ouve nas portas 80 (para renovação de certificado) e 8443 (HTTPS).
 
-  * Realiza a terminação SSL, usando os certificados Let's Encrypt montados a partir do host da VM.
+    * Realiza a terminação SSL, usando os certificados Let's Encrypt montados a partir do host da VM.
 
-  * Atua como Proxy Reverso, encaminhando o tráfego descriptografado (HTTP) para o container da API.
+    * Atua como Proxy Reverso, encaminhando o tráfego descriptografado (HTTP) para o container da API.
 
 2. skillup_api (ASP.NET 8):
 
-  * Não é exposto publicamente. Ouve apenas na porta interna 8080.
+    * Não é exposto publicamente. Ouve apenas na porta interna 8080.
 
-  * Executa toda a lógica de negócios da aplicação.
+    * Executa toda a lógica de negócios da aplicação.
 
-  * Comunica-se com o banco de dados através do nome do serviço db na rede interna.
+    * Comunica-se com o banco de dados através do nome do serviço db na rede interna.
 
 3. skillup_db (PostgreSQL):
 
-  * Não é exposto publicamente. Ouve apenas na porta interna 5432.
+    * Não é exposto publicamente. Ouve apenas na porta interna 5432.
 
-  * Persiste todos os dados reais da aplicação no volume /opt/skillup_db_data do host, garantindo que os dados sobrevivam a reinicializações.
+    * Persiste todos os dados reais da aplicação no volume /opt/skillup_db_data do host, garantindo que os dados sobrevivam a reinicializações.
 
 ### Diagrama da Arquitetura 
 
-<img width="1849" height="635" alt="image" src="https://github.com/user-attachments/assets/d84313a7-1ff4-4fbb-b36c-7473087cfb31" />
+<img width="1849" height="635" alt="image" src="https://github.com/user-attachments/assets/4040d665-d2f5-4ca1-9753-03c04d4b8ac3" />
 
 ### Versioning
 
@@ -72,23 +72,23 @@ v1.0 (Base)
 
 A v1 representa a funcionalidade central do MVP:
 
-  * Registro e Login (/api/v1/auth).
+    * Registro e Login (/api/v1/auth).
 
-  * Catálogo e Módulos de Trilhas (/api/v1/tracks).
+    * Catálogo e Módulos de Trilhas (/api/v1/tracks).
 
-  * Sistema de Progresso e Badges (/api/v1/profile).
+    * Sistema de Progresso e Badges (/api/v1/profile).
 
-  * Onboarding de Interesses (/api/v1/onboarding).
+    * Onboarding de Interesses (/api/v1/onboarding).
 
 v2.0 (Gamificação Avançada)
 
 A v2 introduz a "Gamificação Avançada" (Req. 11), adicionando Pontos de Experiência (XP) e Leaderboards:
 
-  * [v2] POST /api/v2/profile/progress: Agora retorna o xpGained (XP ganho) ao completar um módulo.
+    * [v2] POST /api/v2/profile/progress: Agora retorna o xpGained (XP ganho) ao completar um módulo.
 
-  * [v2] GET /api/v2/profile/me: Agora retorna o totalXp (XP total) do usuário.
+    * [v2] GET /api/v2/profile/me: Agora retorna o totalXp (XP total) do usuário.
 
-  * [v2] GET /api/v2/leaderboard: Um novo endpoint que retorna o Top 10 de usuários da plataforma, ordenados por XP.
+    * [v2] GET /api/v2/leaderboard: Um novo endpoint que retorna o Top 10 de usuários da plataforma, ordenados por XP.
 
 ## 📚 Documentação da API (Endpoints)
 
@@ -189,6 +189,8 @@ sudo docker-compose -f docker-compose.ssl.yml pull api
 sudo docker-compose -f docker-compose.ssl.yml up -d
 ```
 
-Sua aplicação agora está no ar e acessível em https://[SEU_DOMINIO.COM]:8443/swagger.
+Aplicação então estará no ar e acessível em https://[SEU_DOMINIO.COM]:8443/swagger.
+
+## O time
 
 
