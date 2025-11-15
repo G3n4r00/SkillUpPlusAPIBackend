@@ -4,6 +4,8 @@ Este repositório contém o código-fonte do backend da plataforma móvel de mic
 
 A plataforma oferece trilhas de aprendizado personalizadas e gamificação (badges, XP) para capacitar profissionais em habilidades emergentes, em linha com os Objetivos de Desenvolvimento Sustentável (ODS) 4 (Educação de Qualidade) e 8 (Trabalho Decente e Crescimento Econômico) da ONU.
 
+---
+
 ## 🚀 Tecnologias Principais
 
 Este backend é um monólito modular construído com uma arquitetura moderna e pronta para a nuvem:
@@ -19,6 +21,8 @@ Este backend é um monólito modular construído com uma arquitetura moderna e p
 * Arquitetura de Deploy: Docker
 
 * Infraestrutura: Nginx (como Proxy Reverso para terminação SSL)
+
+---
 
 ## 🏛️ Arquitetura de Implantação (Deploy)
 
@@ -90,6 +94,8 @@ A v2 introduz a "Gamificação Avançada" (Req. 11), adicionando Pontos de Exper
 
     * [v2] GET /api/v2/leaderboard: Um novo endpoint que retorna o Top 10 de usuários da plataforma, ordenados por XP.
 
+---
+
 ## 📚 Documentação da API (Endpoints)
 
 A documentação interativa completa, com todos os schemas e a capacidade de testar os endpoints, está disponível no Swagger da aplicação.
@@ -131,6 +137,8 @@ Clique em "Authorize". Todos os seus testes subsequentes agora incluirão o toke
 * GET /api/v2/profile/me: Retorna o dashboard completo do usuário, incluindo XP e badges (JSON).
 
 * GET /api/v2/leaderboard: Retorna o Top 10 do ranking (JSON).
+
+---
 
 ## ⚙️ Guia de Implantação (Deploy na VM Azure)
 
@@ -191,6 +199,29 @@ sudo docker-compose -f docker-compose.ssl.yml up -d
 
 Aplicação então estará no ar e acessível em https://[SEU_DOMINIO.COM]:8443/swagger.
 
+---
+
 ## O time
 
-
+<table>
+  <tr>
+    <th>Nome</th>
+    <th>RM</th>
+    <th>Turma</th>
+  </tr>
+  <tr>
+    <td>Gabriel Genaro Dalaqua</td>
+    <td>551986</td>
+    <td>3ESPF</td>
+  </tr>
+  <tr>
+    <td>Paloma Mirela dos Santos Rodrigues</td>
+    <td>551321</td>
+    <td>3ESPF</td>
+  </tr>
+  <tr>
+    <td>Victor Kenzo Toma</td>
+    <td>551649</td>
+    <td>3ESPF</td>
+  </tr>
+</table>
