@@ -1,55 +1,94 @@
-using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.EntityFrameworkCore;
-using SkillUpPlus.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using SkillUpPlus.Data;
+using SkillUpPlus.Models;
 using SkillUpPlus.Services;
 using System.Net;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// --- CONFIGURAÇÃO DE SERVIÇOS ---
+// CONFIGURAÇÃO DE SERVIÇOS 
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        policy =>
+        {
+            policy.AllowAnyOrigin()
+                  .AllowAnyMethod()
+                  .AllowAnyHeader();
+        });
+});
 
 builder.Services.AddControllers();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Configuração de JWT (Seu código estava perfeito)
-var jwtOptions = builder.Configuration.GetSection("JwtOptions");
-var firebaseProjectId = jwtOptions["Audience"];
-var firebaseIssuer = jwtOptions["Issuer"];
+
+// ADICIONAR SERVIÇOS DO IDENTITY
+// "liga" o UserManager e o SignInManager que o AuthController usa
+builder.Services.AddIdentityCore<User>(options =>
+{
+    options.Password.RequireDigit = false;
+    options.Password.RequireLowercase = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequiredLength = 6;
+})
+.AddEntityFrameworkStores<AppDbContext>()
+.AddSignInManager<SignInManager<User>>();
+
+// CONFIGURAR AUTENTICAÇÃO
+var jwtKey = builder.Configuration["Jwt:Key"];
+var jwtIssuer = builder.Configuration["Jwt:Issuer"];
+var jwtAudience = builder.Configuration["Jwt:Audience"];
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.Authority = firebaseIssuer;
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuer = true,
-            ValidIssuer = firebaseIssuer,
+            ValidIssuer = jwtIssuer,
+
             ValidateAudience = true,
-            ValidAudience = firebaseProjectId,
-            ValidateLifetime = true
+            ValidAudience = jwtAudience,
+
+            ValidateLifetime = true,
+
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
         };
     });
 
-// Injeção de Dependência
-builder.Services.AddScoped<IUserService, UserService>();
+
+// INJEÇÃO DE DEPENDÊNCIA
 builder.Services.AddScoped<ITrackService, TrackService>();
 builder.Services.AddScoped<IProgressService, ProgressService>();
 builder.Services.AddScoped<IOnboardingService, OnboardingService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Configuração para Reverse Proxy (HTTPS)
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+});
 
-// --- CONSTRUÇÃO DO APP E PIPELINE DE MIDDLEWARE ---
+
+// CONSTRUÇÃO DO APP E PIPELINE DE MIDDLEWARE
 
 var app = builder.Build();
 
-// Tratamento Global de Erros
 app.UseExceptionHandler(appError =>
 {
     appError.Run(async context =>
@@ -60,14 +99,16 @@ app.UseExceptionHandler(appError =>
     });
 });
 
-
-// População do Db
+// População do Db (DbInitializer)
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
         var context = services.GetRequiredService<AppDbContext>();
+
+        context.Database.Migrate();
+
         DbInitializer.Initialize(context);
     }
     catch (Exception ex)
@@ -77,27 +118,16 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// Configuração do Pipeline HTTP
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
 
-// Ordem correta da Pipeline de Produção:
-// 1. Encaminhar headers do Proxy (para sabermos se é HTTPS)
+app.UseSwagger();
+app.UseSwaggerUI();
+
 app.UseForwardedHeaders();
-
-// 2. Aplicar política de CORS
 app.UseCors("AllowAll");
 
-// 3. Autenticar (Saber quem é)
 app.UseAuthentication();
-
-// 4. Autorizar (Saber o que pode fazer)
 app.UseAuthorization();
 
-// 5. Mapear para o Controller
 app.MapControllers();
 
 app.Run();

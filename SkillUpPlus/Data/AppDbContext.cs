@@ -1,14 +1,13 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using SkillUpPlus.Models;
 
 
 namespace SkillUpPlus.Data
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext : IdentityDbContext<User>
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
-
-        public DbSet<User> Users { get; set; }
         public DbSet<Track> Tracks { get; set; }
         public DbSet<Module> Modules { get; set; }
         public DbSet<UserProgress> UserProgresses { get; set; }
@@ -21,12 +20,10 @@ namespace SkillUpPlus.Data
         {
             base.OnModelCreating(modelBuilder);
 
-            // Configuração para garantir que usuário não conclua o mesmo módulo duas vezes
             modelBuilder.Entity<UserProgress>()
                 .HasIndex(up => new { up.UserId, up.ModuleId })
                 .IsUnique();
 
-            // Configuração da Chave Composta para UserInterest (Muitos-para-Muitos)
             modelBuilder.Entity<UserInterest>()
                 .HasKey(ui => new { ui.UserId, ui.InterestTagId });
 

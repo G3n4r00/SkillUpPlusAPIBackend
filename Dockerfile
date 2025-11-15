@@ -3,8 +3,6 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copia os arquivos de projeto (.csproj) primeiro para otimizar o cache do Docker
-# Isso evita baixar dependências novamente se apenas o código-fonte mudar
 COPY *.sln .
 COPY SkillUpPlus/*.csproj ./SkillUpPlus/
 
