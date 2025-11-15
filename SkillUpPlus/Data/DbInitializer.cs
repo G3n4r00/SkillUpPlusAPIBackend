@@ -24,7 +24,7 @@ namespace SkillUpPlus.Data
                 new InterestTag { Name = "Programação" }
             };
             context.InterestTags.AddRange(tags);
-            context.SaveChanges(); 
+            context.SaveChanges();
 
             // Badges
             var badges = new Badge[]
@@ -87,8 +87,25 @@ namespace SkillUpPlus.Data
                         {
                             Title = "IA Generativa na Prática",
                             Content = "Como usar prompts efetivos.",
-                            ModuleType = "video"
-                        }
+                            ModuleType = "video",
+                            XpPoints = 30
+                        },
+                        new Module
+                           {
+                            Title = "Quiz de Fixação",
+                            Content = "Qual o primeiro passo da CNV?",
+                            ModuleType = "quiz",
+                            XpPoints = 25
+                            },
+                        new Module
+                        {
+                            Title = "Observação vs Julgamento",
+                            Content = "Exercício prático...",
+                            ModuleType = "text",
+                            XpPoints = 10
+                         }
+
+
                     }
                 }
             };

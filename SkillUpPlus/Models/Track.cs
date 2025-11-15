@@ -32,6 +32,8 @@ namespace SkillUpPlus.Models
         public string Content { get; set; } = string.Empty;
 
         public string ModuleType { get; set; } = "text"; // text, quiz, video
+
+        public int XpPoints { get; set; } = 10;
     }
 }
 

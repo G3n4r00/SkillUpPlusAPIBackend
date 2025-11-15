@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SkillUpPlus.DTOs;
 using SkillUpPlus.Services;
@@ -10,7 +11,8 @@ namespace SkillUpPlus.Controllers
     /// (Requer autenticação)
     /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [Authorize]
     [Produces("application/json")]
     public class TracksController : ControllerBase

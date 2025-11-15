@@ -10,6 +10,8 @@ using SkillUpPlus.Services;
 using System.Net;
 using System.Reflection;
 using System.Text;
+using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -69,6 +71,21 @@ builder.Services
         };
     });
 
+// CONFIGURAR O VERSIONAMENTO DA API
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+    options.ApiVersionReader = new UrlSegmentApiVersionReader();
+}).AddMvc(options =>
+{
+})
+.AddApiExplorer(options =>
+{
+    options.GroupNameFormat = "'v'VVV";
+    options.SubstituteApiVersionInUrl = true;
+});
 
 // INJEÇÃO DE DEPENDÊNCIA
 builder.Services.AddScoped<ITrackService, TrackService>();
@@ -79,23 +96,26 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    options.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "SkillUpPlus API",
-        Version = "v2.0",
-        Description = "Backend da plataforma de microlearning SkillUpPlus 2030+",
-        Contact = new OpenApiContact
-        {
-            Name = "Equipe de Backend",
-            Email = "dev@skillup.com"
-        }
-    });
+    // Injeta o provedor de descrição de versão
+    var provider = builder.Services.BuildServiceProvider()
+                            .GetRequiredService<IApiVersionDescriptionProvider>();
 
-    // Configuração do Botão Authorize
+    // Loop para criar um documento Swagger para CADA versão descoberta
+    foreach (var description in provider.ApiVersionDescriptions)
+    {
+        options.SwaggerDoc(description.GroupName, new OpenApiInfo
+        {
+            Title = $"SkillUpPlus API {description.ApiVersion}",
+            Version = description.ApiVersion.ToString(),
+            Description = "Backend da plataforma de microlearning SkillUpPlus 2030+",
+        });
+    }
+
+    // Configuração do Botão "Authorize"
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         In = ParameterLocation.Header,
-        Description = "Por favor, insira 'Bearer' [espaço] e seu token JWT",
+        Description = "Por favor, insira 'Bearer' [espaco] e seu token JWT (ex: Bearer xxy123)",
         Name = "Authorization",
         Type = SecuritySchemeType.ApiKey,
         Scheme = "Bearer",
@@ -117,6 +137,7 @@ builder.Services.AddSwaggerGen(options =>
         }
     });
 
+    // Mandar o Swagger ler o arquivo XML
     var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
 });
@@ -164,7 +185,16 @@ using (var scope = app.Services.CreateScope())
 
 
 app.UseSwagger();
-app.UseSwaggerUI();
+app.UseSwaggerUI(options =>
+{
+    var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+    foreach (var description in provider.ApiVersionDescriptions)
+    {
+        options.SwaggerEndpoint(
+            $"/swagger/{description.GroupName}/swagger.json",
+            description.GroupName.ToUpperInvariant());
+    }
+});
 
 app.UseForwardedHeaders();
 app.UseCors("AllowAll");

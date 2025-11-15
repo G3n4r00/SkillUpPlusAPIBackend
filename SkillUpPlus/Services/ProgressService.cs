@@ -219,5 +219,69 @@ namespace SkillUpPlus.Services
             return dashboard;
         }
 
+        //V2
+        public async Task<ProgressResponseV2Dto> MarkModuleAsCompletedV2Async(string userId, int moduleId)
+        {
+            var v1Response = await MarkModuleAsCompletedAsync(userId, moduleId);
+
+            // Busca o XP do módulo que acabamos de completar
+            var module = await _context.Modules.FindAsync(moduleId);
+            var xpGained = module?.XpPoints ?? 0; // default 0 se não achar
+
+            return new ProgressResponseV2Dto
+            {
+                IsTrackCompleted = v1Response.IsTrackCompleted,
+                NewBadgeEarned = v1Response.NewBadgeEarned,
+                XpGained = xpGained
+            };
+        }
+
+        public async Task<DashboardV2Dto> GetUserDashboardV2Async(string userId)
+        {
+            var v1Dashboard = await GetUserDashboardAsync(userId);
+
+            var totalXp = await _context.UserProgresses
+                .Where(up => up.UserId == userId)
+                .Include(up => up.Module) 
+                .SumAsync(up => up.Module.XpPoints); 
+
+            return new DashboardV2Dto
+            {
+                UserId = v1Dashboard.UserId,
+                UserName = v1Dashboard.UserName,
+                Badges = v1Dashboard.Badges,
+                InProgressTracks = v1Dashboard.InProgressTracks,
+                CompletedTracks = v1Dashboard.CompletedTracks,
+                RecommendedTracks = v1Dashboard.RecommendedTracks,
+                TotalXp = totalXp 
+            };
+        }
+
+        public async Task<IEnumerable<LeaderboardEntryDto>> GetLeaderboardAsync()
+        {
+            var leaderboardData = await _context.Users
+                .Select(u => new
+                {
+                    UserId = u.Id,
+                    UserName = u.Name,
+                    TotalXp = u.ProgressHistory.Sum(p => p.Module.XpPoints),
+                    BadgesCount = u.Badges.Count
+                })
+                .OrderByDescending(x => x.TotalXp) // Ordena por XP
+                .ThenBy(x => x.BadgesCount)      // Desempate por badges
+                .Take(10)                       // Top 10
+                .ToListAsync();
+
+            // Mapeia para o DTO final com o Rank
+            return leaderboardData.Select((entry, index) => new LeaderboardEntryDto
+            {
+                Rank = index + 1,
+                UserId = entry.UserId,
+                UserName = entry.UserName,
+                TotalXp = entry.TotalXp,
+                BadgesCount = entry.BadgesCount
+            });
+
+        }
     }
 }

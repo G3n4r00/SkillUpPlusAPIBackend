@@ -25,7 +25,7 @@ services:
 
   # Serviço da API
   api:
-    image: g3n0z/skillup-api:2.0 # (Assumindo que esta é sua imagem v2)
+    image: g3n0z/skillup-api:3.0
     container_name: skillup_api
     ports:
       - "8080:8080"

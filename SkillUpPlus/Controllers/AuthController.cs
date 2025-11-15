@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SkillUpPlus.DTOs;
 using SkillUpPlus.Models;
 using SkillUpPlus.Services;
+using Asp.Versioning;
 
 namespace SkillUpPlus.Controllers
 {
@@ -11,7 +12,8 @@ namespace SkillUpPlus.Controllers
     /// Gerencia o registro e login de usuários (Autenticação v2).
     /// </summary>
     [ApiController]
-    [Route("api/auth")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/auth")]
     [Produces("application/json")]
     public class AuthController : ControllerBase
     {

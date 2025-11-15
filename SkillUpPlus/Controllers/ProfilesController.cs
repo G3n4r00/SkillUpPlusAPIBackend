@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SkillUpPlus.DTOs;
 using SkillUpPlus.Services;
@@ -6,12 +7,10 @@ using System.Security.Claims;
 
 namespace SkillUpPlus.Controllers
 {
-    /// <summary>
-    /// Gerencia o perfil do usuário, progresso de aprendizado e gamificação (badges).
-    /// (Requer autenticação)
-    /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [ApiVersion("1.0")] // Este controller responde à v1...
+    [ApiVersion("2.0")] // ...e também à v2
+    [Route("api/v{version:apiVersion}/profile")]
     [Authorize]
     [Produces("application/json")]
     public class ProfileController : ControllerBase
@@ -23,68 +22,44 @@ namespace SkillUpPlus.Controllers
             _progressService = progressService;
         }
 
+        #region === Endpoints v1.0 ===
+
         /// <summary>
-        /// Marca um módulo de aprendizado como concluído para o usuário autenticado.
+        /// (v1.0) Marca um módulo como concluído (sem XP).
         /// </summary>
-        /// <remarks>
-        /// Este é um endpoint crítico. Ele registra o progresso (RF-009) e,
-        /// se o módulo for o último de uma trilha, aciona a lógica para conceder um badge (RF-012).
-        /// </remarks>
-        /// <param name="dto">Um objeto JSON contendo o ID do módulo a ser marcado.</param>
-        /// <response code="200">Módulo marcado com sucesso. Retorna o status de conclusão da trilha e (opcionalmente) um novo badge.</response>
-        /// <response code="400">Ocorreu um erro (ex: ID do módulo não existe). A mensagem de erro é retornada.</response>
-        /// <response code="401">Usuário não autenticado (token inválido ou ausente).</response>
         [HttpPost("progress")]
+        [MapToApiVersion("1.0")] // <-- Trava este método na v1
         [ProducesResponseType(typeof(ProgressResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<ActionResult<ProgressResponseDto>> MarkProgress([FromBody] MarkModuleDto dto)
+        public async Task<ActionResult<ProgressResponseDto>> MarkProgressV1([FromBody] MarkModuleDto dto)
         {
-            // Código de Produção: Pega o ID do usuário de dentro do token
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized();
-            }
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
             try
             {
                 var result = await _progressService.MarkModuleAsCompletedAsync(userId, dto.ModuleId);
-
-                // O 'result' informa ao app se a trilha foi concluída 
-                // e se um novo badge foi ganho, para o app exibir a animação.
                 return Ok(result);
             }
             catch (Exception ex)
             {
-                // Captura erros do serviço (ex: "Módulo não encontrado.")
                 return BadRequest(new { message = ex.Message });
             }
         }
 
         /// <summary>
-        /// Busca o painel (dashboard) completo do usuário autenticado.
+        /// (v1.0) Busca o painel (dashboard) do usuário (sem XP).
         /// </summary>
-        /// <remarks>
-        /// Este é o endpoint principal da tela inicial do app.
-        /// Retorna o progresso (RF-010), dados para "continuar" (RF-007),
-        /// badges ganhos (RF-012) e recomendações (RF-011).
-        /// </remarks>
-        /// <response code="200">Retorna o objeto DashboardDto completo.</response>
-        /// <response code="400">Ocorreu um erro ao buscar o perfil (ex: usuário não encontrado no banco).</response>
-        /// <response code="401">Usuário não autenticado (token inválido ou ausente).</response>
         [HttpGet("me")]
+        [MapToApiVersion("1.0")] // <-- Trava este método na v1
         [ProducesResponseType(typeof(DashboardDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        public async Task<ActionResult<DashboardDto>> GetMyProfile()
+        public async Task<ActionResult<DashboardDto>> GetMyProfileV1()
         {
-            // Código de Produção: Pega o ID do usuário de dentro do token
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Unauthorized();
-            }
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
 
             try
             {
@@ -93,9 +68,64 @@ namespace SkillUpPlus.Controllers
             }
             catch (Exception ex)
             {
-                // Captura erros do serviço (ex: "Usuário não encontrado.")
                 return BadRequest(new { message = ex.Message });
             }
         }
+
+        #endregion
+
+        #region === Endpoints v2.0 (Novos) ===
+
+        /// <summary>
+        /// (v2.0) Marca um módulo como concluído e retorna o XP ganho.
+        /// </summary>
+        [HttpPost("progress")]
+        [MapToApiVersion("2.0")] // <-- Trava este método na v2
+        [ProducesResponseType(typeof(ProgressResponseV2Dto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<ProgressResponseV2Dto>> MarkProgressV2([FromBody] MarkModuleDto dto)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            try
+            {
+                // Chama o novo método do serviço
+                var result = await _progressService.MarkModuleAsCompletedV2Async(userId, dto.ModuleId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// (v2.0) Busca o painel (dashboard) do usuário, incluindo XP total.
+        /// </summary>
+        [HttpGet("me")]
+        [MapToApiVersion("2.0")] // <-- Trava este método na v2
+        [ProducesResponseType(typeof(DashboardV2Dto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<DashboardV2Dto>> GetMyProfileV2()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            try
+            {
+                // Chama o novo método do serviço
+                var dashboard = await _progressService.GetUserDashboardV2Async(userId);
+                return Ok(dashboard);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        #endregion
     }
 }

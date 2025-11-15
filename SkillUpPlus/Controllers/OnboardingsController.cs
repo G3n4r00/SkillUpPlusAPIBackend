@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SkillUpPlus.DTOs;
 using SkillUpPlus.Services;
 using System.Security.Claims;
+using Asp.Versioning;
 
 namespace SkillUpPlus.Controllers
 {
@@ -11,7 +12,8 @@ namespace SkillUpPlus.Controllers
     /// (Requer autenticação)
     /// </summary>
     [ApiController]
-    [Route("api/[controller]")]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/[controller]")]
     [Authorize] 
     [Produces("application/json")]
     public class OnboardingController : ControllerBase

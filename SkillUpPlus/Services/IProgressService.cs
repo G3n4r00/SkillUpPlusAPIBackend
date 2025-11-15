@@ -4,10 +4,18 @@ namespace SkillUpPlus.Services
 {
     public interface IProgressService
     {
-        // Retorna um DTO informando se completou a trilha e se ganhou badge
+        // --- V1 ---
         Task<ProgressResponseDto> MarkModuleAsCompletedAsync(string userId, int moduleId);
-
-        // Retorna o DTO do dashboard do usuário com progresso e badges
         Task<DashboardDto> GetUserDashboardAsync(string userId);
+
+        // --- V2 ---
+
+        Task<ProgressResponseV2Dto> MarkModuleAsCompletedV2Async(string userId, int moduleId);
+
+
+        Task<DashboardV2Dto> GetUserDashboardV2Async(string userId);
+
+
+        Task<IEnumerable<LeaderboardEntryDto>> GetLeaderboardAsync();
     }
 }
