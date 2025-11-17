@@ -100,7 +100,7 @@ A v2 introduz a "Gamificação Avançada" (Req. 11), adicionando Pontos de Exper
 
 A documentação interativa completa, com todos os schemas e a capacidade de testar os endpoints, está disponível no Swagger da aplicação.
 
-<a href="rm551986.admninistradorlinux.com.br">URL de acesso: rm551986.admninistradorlinux.com.br</a> 
+*https://rm551986.administradorlinux.com.br*
 
 #### Autenticação (v1)
 
