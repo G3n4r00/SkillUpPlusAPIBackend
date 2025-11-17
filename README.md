@@ -147,57 +147,57 @@ Este foi o processo que seguimos utilizando uma VM Debian com Docker e docker-co
 1. Pré-requisitos (No Host da VM)
 
 ```bash
-# 1. Crie a rede Docker
+# 1. Criamos a rede Docker
 sudo docker network create --subnet=10.11.200.0/24 skillup_net
 
-# 2. Crie os diretórios de volumes persistentes
+# 2. Criamos os diretórios de volumes persistentes
 sudo mkdir -p /opt/skillup_db_data
 sudo mkdir -p /var/lib/docker/gs     
 sudo mkdir -p /var/www/certbot       
 ```
 
-2. Gerar Certificado SSL (Let's Encrypt)
+2. Gerando Certificado SSL (Let's Encrypt)
 
 ```bash
-# 1. Instale o Certbot
+# 1. Instalamos o Certbot
 sudo apt update && sudo apt install certbot -y
 
-# 2. Gere o certificado
-sudo certbot certonly --standalone -d [SEU_DOMINIO.COM]
+# 2. Geramos o certificado
+sudo certbot certonly --standalone -d rm551986.administradorlinux.com.br
 ```
 
-3. Publicar a Imagem (Na Máquina de DEV)
+3. Publicando a Imagem (Na Máquina de DEV)
 
 ```bash
-# 1. Construa a imagem final (ex: v3.0)
-docker build -t [SEU_USUARIO_DOCKERHUB]/skillup-api:3.0 .
+# 1. Constrímos a imagem final
+docker build -t g3n0z/skillup-api:4.0 .
 
-# 2. Publique no Docker Hub (Req 06)
+# 2. Publicamos no Docker Hub
 docker login
-docker push [SEU_USUARIO_DOCKERHUB]/skillup-api:3.0
+docker push g3n0z/skillup-api:4.0
 ```
 
-4. Criar os Arquivos de Orquestração (No Host da VM)
+4. Criamos os Arquivos de Orquestração (No Host da VM)
 
-Crie uma pasta de deploy (ex: ~/skillup-deploy) e coloque nela os dois arquivos a seguir:
+Criamos uma pasta de deploy (~/skillup-deploy) e colocamos nela os dois arquivos a seguir:
 
-* Arquivo 1: nginx/nginx.conf (Crie este arquivo. Ele deve conter a configuração do proxy reverso para api:8080, os caminhos para os certificados SSL e o bloco listen 80 para renovação do Certbot).
+* Arquivo 1: nginx/nginx.conf (configuração do proxy reverso para api, os caminhos para os certificados SSL e o bloco listen 80 para renovação do Certbot).
 
-* Arquivo 2: docker-compose.ssl.yml (Este é o arquivo principal que orquestra os 3 containers: proxy, api e db, com os healthchecks e volumes corretos).
+* Arquivo 2: docker-compose.ssl.yml (arquivo principal que orquestra os 3 containers: proxy, api e db, com os healthchecks e volumes corretos).
 
-5. Iniciar a Aplicação
+5. Iniciamos a Aplicação
 
 Na VM, dentro da pasta ~/skillup-deploy:
 
 ```bash
-# 1. Baixe a imagem mais recente da API
+# 1. Baixamos a imagem mais recente da API
 sudo docker-compose -f docker-compose.ssl.yml pull api
 
-# 2. Suba a pilha completa
+# 2. Subimos a stack completa
 sudo docker-compose -f docker-compose.ssl.yml up -d
 ```
 
-Aplicação então estará no ar e acessível em https://[SEU_DOMINIO.COM]:8443/swagger.
+*Por fim temos a nossa API no ar e acessível em https://rm551986.administradorlinux.com.br*
 
 ---
 
