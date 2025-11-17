@@ -1,0 +1,67 @@
+networks:
+  skillup_net:
+    external: true
+
+services:
+  # 1. Serviço do Banco
+  db:
+    image: postgres:16
+    container_name: skillup_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: pass1234
+      POSTGRES_DB: SkillUpPlusDb
+    volumes:
+      - /opt/skillup_db_data:/var/lib/postgresql/data
+    networks:
+      - skillup_net
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d SkillUpPlusDb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # 2. Serviço da API
+  api:
+    image: g3n0z/skillup-api:4.0
+    container_name: skillup_api
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - /var/lib/docker/gs:/var/www/html
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=SkillUpPlusDb;Username=postgres;Password=pass1234
+      - Jwt__Key=jk6wjH9rAoZFWqqEAgMxR3YjFNn1HsDHYREivR282rjFGbz8LkIVkAyNOpFnowtPDLjdsadsaygusadgbj7765dsagbjn6
+      - Jwt__Issuer=https://api.skillupplus.com
+      - Jwt__Audience=https://app.skillupplus.com
+      - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
+    networks:
+      - skillup_net
+    restart: always
+
+  # 3. Serviço de Proxy
+  proxy:
+    image: nginx:1.29
+    container_name: skillup_proxy
+    ports:
+      # Mapeia a porta 8443 e 80
+      - "8443:8443"
+      - "80:80"
+    volumes:
+      # Mapeia configuração do Nginx
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+
+      #Mapeia os certificados
+      - /etc/letsencrypt/live/rm551986.administradorlinux.com.br/fullchain.pem:/etc/ssl/certs/fullchain.pem:ro
+      - /etc/letsencrypt/live/rm551986.administradorlinux.com.br/privkey.pem:/etc/ssl/certs/privkey.pem:ro
+
+      # Mapeia a pasta de desafio do Certbot (para renovações)
+      - /var/www/certbot:/var/www/certbot:ro
+
+    networks:
+      - skillup_net
+    depends_on:
+      - api
+    restart: always
