@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SkillUpPlus.Data;
 using SkillUpPlus.DTOs;
+using SkillUpPlus.Exceptions;
 
 namespace SkillUpPlus.Services
 {
@@ -36,16 +37,15 @@ namespace SkillUpPlus.Services
             }).ToListAsync();
         }
 
-        public async Task<TrackDetailDto?> GetTrackByIdAsync(int id)
+        public async Task<TrackDetailDto> GetTrackByIdAsync(int id)
         {
             // Busca a trilha INCLUINDO os módulos (Eager Loading)
             var track = await _context.Tracks
                 .Include(t => t.Modules)
                 .FirstOrDefaultAsync(t => t.Id == id);
 
-            if (track == null) return null;
+            if (track == null) throw new NotFoundException($"Trilha com ID {id} não encontrada."); ;
 
-            // Mapeamento manual (poderia usar AutoMapper, mas faremos manual por clareza)
             return new TrackDetailDto
             {
                 Id = track.Id,

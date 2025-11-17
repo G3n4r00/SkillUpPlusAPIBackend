@@ -1,7 +1,8 @@
-﻿using SkillUpPlus.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using SkillUpPlus.Data;
 using SkillUpPlus.DTOs;
+using SkillUpPlus.Exceptions;
 using SkillUpPlus.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace SkillUpPlus.Services
 {
@@ -18,12 +19,13 @@ namespace SkillUpPlus.Services
         {
             var response = new ProgressResponseDto();
 
-            // Validar se o módulo existe e pegar dados da Trilha (Track)
+            // Validar se o módulo existe e pegar dados da Track
             var module = await _context.Modules
-                .Include(m => m.Track) // de qual trilha é
+                .Include(m => m.Track)
                 .FirstOrDefaultAsync(m => m.Id == moduleId);
 
-            if (module == null) throw new Exception("Módulo não encontrado.");
+            if (module == null)
+                throw new NotFoundException($"Módulo com ID {moduleId} não foi encontrado.");
 
             // Registrar o progresso (Idempotente)
             var existingProgress = await _context.UserProgresses
@@ -42,7 +44,6 @@ namespace SkillUpPlus.Services
 
 
             // Verificar se a trilha foi completada
-            // Conta quantos módulos tem a trilha
             var totalModules = await _context.Modules.CountAsync(m => m.TrackId == module.TrackId);
 
             // Conta quantos módulos dessa trilha o usuário já fez
@@ -101,13 +102,13 @@ namespace SkillUpPlus.Services
 
         public async Task<DashboardDto> GetUserDashboardAsync(string userId)
         {
-            //Carregar User COM Interesses(Include essencial!)
             var user = await _context.Users
             .Include(u => u.Badges).ThenInclude(ub => ub.Badge)
-            .Include(u => u.Interests).ThenInclude(ui => ui.InterestTag) // <--- NOVO INCLUDE
+            .Include(u => u.Interests).ThenInclude(ui => ui.InterestTag)
             .FirstOrDefaultAsync(u => u.Id == userId);
 
-            if (user == null) throw new Exception("Usuário não encontrado.");
+            if (user == null)
+                throw new NotFoundException($"Usuário com ID {userId} não foi encontrado.");
 
             // Recuperar todo o histórico de progresso desse usuário
             // Também os dados dos Módulos e Trilhas para evitar múltiplas queries
@@ -226,6 +227,8 @@ namespace SkillUpPlus.Services
 
             // Busca o XP do módulo que acabamos de completar
             var module = await _context.Modules.FindAsync(moduleId);
+            if (module == null)
+                throw new NotFoundException($"Módulo com ID {moduleId} não foi encontrado.");
             var xpGained = module?.XpPoints ?? 0; // default 0 se não achar
 
             return new ProgressResponseV2Dto

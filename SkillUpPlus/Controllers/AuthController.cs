@@ -13,7 +13,7 @@ namespace SkillUpPlus.Controllers
     /// </summary>
     /// <remarks>
     /// Este é o "cartão de visitas" da API. Não requer autenticação,
-    /// pois é o endpoint usado para OBTER o token de autenticação.
+    /// endpoint é usado para OBTER o token de autenticação.
     /// </remarks>
     [ApiController]
     [ApiVersion("1.0")]
@@ -24,6 +24,11 @@ namespace SkillUpPlus.Controllers
         private readonly UserManager<User> _userManager;
         private readonly ITokenService _tokenService;
 
+        /// <summary>
+        /// Inicializa uma nova instância do AuthController.
+        /// </summary>
+        /// <param name="userManager">Serviço do Identity para gerenciar usuários (criar, checar senha).</param>
+        /// <param name="tokenService">Serviço customizado para gerar tokens JWT.</param>
         public AuthController(UserManager<User> userManager, ITokenService tokenService)
         {
             _userManager = userManager;
@@ -39,10 +44,13 @@ namespace SkillUpPlus.Controllers
         /// </remarks>
         /// <param name="dto">Dados de registro (e-mail, nome, senha).</param>
         /// <response code="200">Retorna os dados do usuário e um JWT válido.</response>
-        /// <response code="400">Dados inválidos. A resposta pode ser uma string (ex: "Este e-mail já está em uso.") ou um array de erros do Identity (ex: "Senhas devem ter pelo menos 6 caracteres.").</response>
+        /// <response code="400">Dados inválidos (ex: "Este e-mail já está em uso.").</response>
+        /// <response code="500">Erro interno do servidor (ex: falha no banco de dados).</response>
         [HttpPost("register")]
         [ProducesResponseType(typeof(UserTokenDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)] // 'object' cobre strings E arrays de erro
+        [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
+
         public async Task<ActionResult<UserTokenDto>> Register(RegisterDto dto)
         {
             if (await _userManager.Users.AnyAsync(x => x.Email == dto.Email))
@@ -85,9 +93,12 @@ namespace SkillUpPlus.Controllers
         /// <param name="dto">Dados de login (e-mail, senha).</param>
         /// <response code="200">Retorna os dados do usuário e um JWT válido.</response>
         /// <response code="401">E-mail ou senha inválidos.</response>
+        /// <response code="500">Erro interno do servidor (ex: falha no banco de dados).</response>
         [HttpPost("login")]
         [ProducesResponseType(typeof(UserTokenDto), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
+
         public async Task<ActionResult<UserTokenDto>> Login(LoginDto dto)
         {
             var user = await _userManager.FindByEmailAsync(dto.Email);

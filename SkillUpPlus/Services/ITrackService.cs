@@ -8,6 +8,6 @@ namespace SkillUpPlus.Services
         Task<IEnumerable<TrackSummaryDto>> GetAllTracksAsync(string? category);
 
         // Retorna detalhes completos com módulos
-        Task<TrackDetailDto?> GetTrackByIdAsync(int id);
+        Task<TrackDetailDto> GetTrackByIdAsync(int id);
     }
 }

@@ -19,6 +19,10 @@ namespace SkillUpPlus.Controllers
     {
         private readonly IOnboardingService _onboardingService;
 
+        /// <summary>
+        /// Inicializa uma nova instância do OnboardingController.
+        /// </summary>
+        /// <param name="onboardingService">O serviço injetado que contém a lógica de onboarding.</param>
         public OnboardingController(IOnboardingService onboardingService)
         {
             _onboardingService = onboardingService;
@@ -32,9 +36,11 @@ namespace SkillUpPlus.Controllers
         /// </remarks>
         /// <response code="200">Retorna a lista de tags de interesse.</response>
         /// <response code="401">Usuário não autenticado (token inválido ou ausente).</response>
+        /// <response code="500">Erro interno do servidor (ex: falha no banco de dados).</response>
         [HttpGet("tags")]
         [ProducesResponseType(typeof(IEnumerable<InterestTagDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<IEnumerable<InterestTagDto>>> GetTags()
         {
             var tags = await _onboardingService.GetAllTagsAsync();
@@ -49,12 +55,15 @@ namespace SkillUpPlus.Controllers
         /// </remarks>
         /// <param name="dto">Um objeto JSON contendo a lista de IDs das tags selecionadas.</param>
         /// <response code="200">Preferências salvas com sucesso.</response>
-        /// <response code="400">Nenhum ID de interesse foi fornecido.</response>
+        /// <response code="400">Nenhum ID de interesse foi fornecido (lista vazia).</response>
         /// <response code="401">Usuário não autenticado (token inválido ou ausente).</response>
+        /// <response code="500">Erro interno do servidor (ex: falha no banco de dados).</response>
         [HttpPost]
         [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
+
         public async Task<IActionResult> SavePreferences([FromBody] OnboardingRequestDto dto)
         {
             // Busca o ID do usuário a partir do Token JWT

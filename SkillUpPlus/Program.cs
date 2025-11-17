@@ -12,6 +12,10 @@ using System.Reflection;
 using System.Text;
 using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
+using SkillUpPlus.Middleware;
+using SkillUpPlus.Exceptions;
+using System.Collections.Generic; 
+using System; 
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -154,15 +158,17 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 
 var app = builder.Build();
 
-app.UseExceptionHandler(appError =>
-{
-    appError.Run(async context =>
-    {
-        context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-        context.Response.ContentType = "application/json";
-        await context.Response.WriteAsJsonAsync(new { message = "Ocorreu um erro interno no servidor." });
-    });
-});
+app.UseMiddleware<ErrorHandlingMiddleware>();
+
+//app.UseExceptionHandler(appError =>
+//{
+//    appError.Run(async context =>
+//    {
+//        context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+//        context.Response.ContentType = "application/json";
+//        await context.Response.WriteAsJsonAsync(new { message = "Ocorreu um erro interno no servidor." });
+//    });
+//});
 
 // População do Db (DbInitializer)
 using (var scope = app.Services.CreateScope())

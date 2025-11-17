@@ -11,8 +11,8 @@ namespace SkillUpPlus.Controllers
     /// </summary>
     /// <remarks>
     /// Este controller é **exclusivo da v2.0** e implementa a
-    /// funcionalidade de "Gamificação Avançada",
-    /// fornecendo o ranking de usuários.
+    /// funcionalidade de Gamificação Avançada,
+    /// fornecendo o ranking de usuários. 
     /// </remarks>
     [ApiController]
     [ApiVersion("2.0")]
@@ -42,9 +42,12 @@ namespace SkillUpPlus.Controllers
         /// </remarks>
         /// <response code="200">Retorna a lista do Top 10 (Leaderboard).</response>
         /// <response code="401">Usuário não autenticado (token inválido ou ausente).</response>
+        /// <response code="500">Erro interno do servidor (ex: falha no banco de dados).</response>
         [HttpGet]
         [ProducesResponseType(typeof(IEnumerable<LeaderboardEntryDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status500InternalServerError)]
+
         public async Task<ActionResult<IEnumerable<LeaderboardEntryDto>>> GetLeaderboard()
         {
             var leaderboard = await _progressService.GetLeaderboardAsync();
