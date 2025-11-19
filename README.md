@@ -201,6 +201,11 @@ sudo docker-compose -f docker-compose.ssl.yml up -d
 
 ---
 
+### Link do video para disciplina de C#
+
+https://youtu.be/8NVobCWv-6k
+
+---
 ## O time
 
 <table>
