@@ -41,8 +41,8 @@ namespace SkillUpPlus.Controllers
         /// Marca um módulo de aprendizado como concluído para o usuário.
         /// </summary>
         /// <remarks>
-        /// Registra o progresso (RF-009) e, se o módulo for o último de uma trilha,
-        /// aciona a lógica para conceder um badge (RF-012). Esta versão *não* retorna XP.
+        /// Registra o progresso e, se o módulo for o último de uma trilha,
+        /// aciona a lógica para conceder um badge. Esta versão *não* retorna XP.
         /// </remarks>
         /// <param name="dto">Um objeto JSON contendo o ID (`ModuleId`) do módulo a ser marcado.</param>
         /// <response code="200">Módulo marcado com sucesso. Retorna o status da trilha e (opcionalmente) um novo badge.</response>
@@ -52,7 +52,7 @@ namespace SkillUpPlus.Controllers
         [HttpPost("progress")]
         [MapToApiVersion("1.0")]
         [ProducesResponseType(typeof(ProgressResponseDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)] // MUDANÇA: Era 400
+        [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)] 
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult<ProgressResponseDto>> MarkProgressV1([FromBody] MarkModuleDto dto)
         {
@@ -67,8 +67,8 @@ namespace SkillUpPlus.Controllers
         /// Busca o painel (dashboard) do usuário (sem XP).
         /// </summary>
         /// <remarks>
-        /// Endpoint da v1. Retorna o progresso (RF-010), dados para "continuar" (RF-007),
-        /// badges ganhos (RF-012) e recomendações (RF-011). Esta versão *não* inclui XP total.
+        /// Endpoint da v1. Retorna o progresso, dados para "continuar",
+        /// badges ganhos e recomendações. Esta versão *não* inclui XP total.
         /// </remarks>
         /// <response code="200">Retorna o objeto DashboardDto (v1) completo.</response>
         /// <response code="404">O usuário autenticado não foi encontrado no banco de dados.</response>
@@ -77,7 +77,7 @@ namespace SkillUpPlus.Controllers
         [HttpGet("me")]
         [MapToApiVersion("1.0")]
         [ProducesResponseType(typeof(DashboardDto), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)] // MUDANÇA: Era 400
+        [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)] 
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult<DashboardDto>> GetMyProfileV1()
         {
@@ -103,7 +103,7 @@ namespace SkillUpPlus.Controllers
         [HttpPost("progress")]
         [MapToApiVersion("2.0")]
         [ProducesResponseType(typeof(ProgressResponseV2Dto), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)] // MUDANÇA: Era 400
+        [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)] 
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult<ProgressResponseV2Dto>> MarkProgressV2([FromBody] MarkModuleDto dto)
         {
@@ -128,7 +128,7 @@ namespace SkillUpPlus.Controllers
         [HttpGet("me")]
         [MapToApiVersion("2.0")]
         [ProducesResponseType(typeof(DashboardV2Dto), StatusCodes.Status200OK)]
-        [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)] // MUDANÇA: Era 400
+        [ProducesResponseType(typeof(object), StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult<DashboardV2Dto>> GetMyProfileV2()
         {

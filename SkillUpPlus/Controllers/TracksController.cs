@@ -8,7 +8,6 @@ namespace SkillUpPlus.Controllers
 {
     /// <summary>
     /// Gerencia a exibição de Trilhas de Aprendizado (LRN) e seus Módulos.
-    /// (Requer autenticação)
     /// </summary>
     /// <remarks>
     /// Este controller serve como o "cardápio" da aplicação, permitindo
